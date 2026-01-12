@@ -24,7 +24,7 @@ from sklearn.model_selection import (cross_val_score, learning_curve,
 from sklearn.metrics import (
     accuracy_score, precision_score, recall_score, f1_score,
     mean_squared_error, mean_absolute_error, r2_score,
-    confusion_matrix, roc_curve, auc
+    confusion_matrix, roc_curve, auc, classification_report
 )
 
 from xgboost import XGBClassifier
@@ -136,25 +136,39 @@ def calculate_model_metrics(y_true, y_pred, task_type='regression'):
 
 def evaluate_song_level_accuracy(model, X_test, y_test, groups_test, label_encoder):
 
+    # Segment-level predictions
     y_pred_segments = model.predict(X_test)
 
+    print("\n===== SEGMENT-LEVEL METRICS =====")
+    print(f"Segment Accuracy: {accuracy_score(y_test, y_pred_segments):.4f}")
+    print("\nSegment Classification Report:")
+    print(classification_report(y_test, y_pred_segments, target_names=label_encoder.classes_))
+
+    # Build dataframe aligned by file
     results_df = pd.DataFrame({
         'file_name': groups_test,
         'true_label': y_test,
         'pred_label': y_pred_segments
     })
 
+    # Majority vote per file
     vote_results = results_df.groupby('file_name').agg({
-        'true_label': 'first', # Nhãn giống nhau cho mọi segment
+        'true_label': 'first',
         'pred_label': lambda x: x.mode()[0]
     }).reset_index()
 
-    acc = accuracy_score(vote_results['true_label'], vote_results['pred_label'])
+    # Song-level metrics
+    y_true_song = vote_results['true_label']
+    y_pred_song = vote_results['pred_label']
 
-    print(f"Segment-level Accuracy: {accuracy_score(y_test, y_pred_segments):.4f}")
-    print(f"Song-level Accuracy (Voting): {acc:.4f}")
+    song_acc = accuracy_score(y_true_song, y_pred_song)
 
-    return acc
+    print("\n===== SONG-LEVEL METRICS (MAJORITY VOTE) =====")
+    print(f"Song Accuracy: {song_acc:.4f}")
+    print("\nSong Classification Report:")
+    print(classification_report(y_true_song, y_pred_song, target_names=label_encoder.classes_))
+
+    return song_acc, vote_results
 
 
 def plot_model_comparison(comparison_df, figsize=(12, 8), title="Model Comparison"):
@@ -319,100 +333,6 @@ def plot_roc_curves(models, X_test, y_test, figsize=(10, 8)):
     plt.ylabel('True Positive Rate', fontweight='bold')
     plt.title('ROC Curves Comparison', fontweight='bold', fontsize=14)
     plt.legend(loc="lower right")
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_learning_curves(model, X, y, cv=5, figsize=(10, 6)):
-    """
-    Plot learning curves to analyze model performance vs training set size.
-
-    Parameters:
-    -----------
-    model : sklearn estimator
-        The model to evaluate
-    X : array-like
-        Features
-    y : array-like
-        Targets
-    cv : int
-        Cross-validation folds
-    figsize : tuple
-        Figure size
-    """
-    train_sizes, train_scores, val_scores = learning_curve(
-        model, X, y, cv=cv, n_jobs=-1,
-        train_sizes=np.linspace(0.1, 1.0, 10),
-        scoring='r2' if hasattr(model, 'predict') else 'accuracy'
-    )
-
-    train_mean = np.mean(train_scores, axis=1)
-    train_std = np.std(train_scores, axis=1)
-    val_mean = np.mean(val_scores, axis=1)
-    val_std = np.std(val_scores, axis=1)
-
-    plt.figure(figsize=figsize)
-    plt.plot(train_sizes, train_mean, 'o-', color='blue', label='Training Score')
-    plt.fill_between(train_sizes, train_mean - train_std, train_mean + train_std,
-                     alpha=0.1, color='blue')
-
-    plt.plot(train_sizes, val_mean, 'o-', color='red', label='Validation Score')
-    plt.fill_between(train_sizes, val_mean - val_std, val_mean + val_std,
-                     alpha=0.1, color='red')
-
-    plt.xlabel('Training Set Size', fontweight='bold')
-    plt.ylabel('Score', fontweight='bold')
-    plt.title('Learning Curves', fontweight='bold', fontsize=14)
-    plt.legend(loc='best')
-    plt.grid(True, alpha=0.3)
-    plt.tight_layout()
-    plt.show()
-
-
-def plot_validation_curves(model, X, y, param_name, param_range, cv=5, figsize=(10, 6)):
-    """
-    Plot validation curves for hyperparameter tuning.
-
-    Parameters:
-    -----------
-    model : sklearn estimator
-        The model to evaluate
-    X : array-like
-        Features
-    y : array-like
-        Targets
-    param_name : str
-        Name of parameter to vary
-    param_range : list
-        Range of parameter values
-    cv : int
-        Cross-validation folds
-    figsize : tuple
-        Figure size
-    """
-    train_scores, val_scores = validation_curve(
-        model, X, y, param_name=param_name, param_range=param_range, cv=cv
-    )
-
-    train_mean = np.mean(train_scores, axis=1)
-    train_std = np.std(train_scores, axis=1)
-    val_mean = np.mean(val_scores, axis=1)
-    val_std = np.std(val_scores, axis=1)
-
-    plt.figure(figsize=figsize)
-    plt.plot(param_range, train_mean, 'o-', color='blue', label='Training Score')
-    plt.fill_between(param_range, train_mean - train_std, train_mean + train_std,
-                     alpha=0.1, color='blue')
-
-    plt.plot(param_range, val_mean, 'o-', color='red', label='Validation Score')
-    plt.fill_between(param_range, val_mean - val_std, val_mean + val_std,
-                     alpha=0.1, color='red')
-
-    plt.xlabel(param_name, fontweight='bold')
-    plt.ylabel('Score', fontweight='bold')
-    plt.title(f'Validation Curve - {param_name}', fontweight='bold', fontsize=14)
-    plt.legend(loc='best')
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.show()
