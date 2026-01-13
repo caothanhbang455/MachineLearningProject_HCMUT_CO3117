@@ -14,7 +14,7 @@ def test_feature(model, X_test_t, y_test_t, num_classes=10):
         y_pred = preds.argmax(dim=1)
         acc = (y_pred == y_test_t).float().mean().item()
 
-    print(f"\n>>> Test Accuracy: {acc:.4f}")
+    print(f"\n Test Accuracy: {acc:.4f}")
     print("\nClassification Report:")
     print(classification_report(y_test_t.cpu(), y_pred.cpu(), digits=4))
     return acc
