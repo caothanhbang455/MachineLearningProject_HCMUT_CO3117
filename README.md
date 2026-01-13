@@ -42,6 +42,8 @@ ML_Project/
 │
 ├── checkpoints/                      # Saved model weights
 └── runs/                             # TensorBoard logs
+
+```
 ## Dataset
 
 - **Dataset**: GTZAN Music Genre Dataset  
@@ -54,7 +56,6 @@ Each audio file is segmented into **3-second non-overlapping clips** to:
 - Increase sample size  
 - Enable segment-level and song-level evaluation  
 - Reduce overfitting  
-```
 ---
 
 ## Exploratory Data Analysis
