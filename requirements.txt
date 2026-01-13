@@ -1,0 +1,33 @@
+# Core
+numpy
+scipy
+pandas
+pyyaml
+importlib-metadata
+
+# Audio processing
+librosa
+soundfile
+
+# Visualization
+matplotlib
+seaborn
+
+# Machine Learning
+scikit-learn
+xgboost
+lightgbm
+
+# Deep Learning
+torch
+torchvision
+
+# Experiment tracking & logging
+wandb
+tensorboard
+
+# Image processing
+Pillow
+
+# Notebook / display utilities
+ipython
