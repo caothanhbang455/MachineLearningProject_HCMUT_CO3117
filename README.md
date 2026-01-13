@@ -142,16 +142,15 @@ Implemented in `train_mlp.py`.
 
 ### Deep Learning (image-based)
 
-CNN trained on:
+This branch uses **2D time–frequency (f, t) Mel-spectrogram representations** as input features for convolutional neural networks.
 
-- Mel spectrogram images  
-- Waveform images  
+- Input representation: Mel-spectrograms (frequency × time)
+- Each spectrogram is treated as a 2D image
+- Temporal variability is handled using adaptive pooling layers
 
-Adaptive pooling used to handle variable-length inputs.  
+Training and evaluation are implemented in `train_cnn.py`.
 
-Training implemented in `train_cnn.py`.
-
-This branch investigates whether **learned representations outperform handcrafted features**.
+This setting is designed to investigate whether **learned time–frequency representations** obtained by CNNs can outperform **handcrafted audio features**.
 
 ---
 
